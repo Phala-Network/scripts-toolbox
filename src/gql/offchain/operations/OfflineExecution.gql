@@ -1,0 +1,7 @@
+query OfflineExecution {
+  phatOfflineExecution(limit: 1825, orderBy: { dt: DESC }) {
+    dt
+    executionCount
+    userCount
+  }
+}

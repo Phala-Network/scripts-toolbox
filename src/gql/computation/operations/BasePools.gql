@@ -1,0 +1,19 @@
+query BasePools(
+  $orderBy: [BasePoolOrderByInput!]!
+  $first: Int
+  $where: BasePoolWhereInput
+) {
+  basePoolsConnection(orderBy: $orderBy, first: $first, where: $where) {
+    edges {
+      node {
+        withdrawingShares
+        id
+        kind
+        releasingValue
+        withdrawingValue
+        freeValue
+      }
+    }
+    totalCount
+  }
+}

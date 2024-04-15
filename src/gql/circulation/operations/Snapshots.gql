@@ -1,0 +1,10 @@
+query Snapshots {
+  snapshotsConnection(orderBy: timestamp_DESC, first: 1825) {
+    edges {
+      node {
+        circulation
+        timestamp
+      }
+    }
+  }
+}

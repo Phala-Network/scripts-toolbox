@@ -1,0 +1,44 @@
+{
+  "name": "scripts-toolbox",
+  "type": "module",
+  "module": "src/index.ts",
+  "scripts": {
+    "build": "bun build.ts",
+    "codegen:computation": "graphql-codegen --config src/gql/computation/codegen.ts",
+    "codegen:circulation": "graphql-codegen --config src/gql/circulation/codegen.ts",
+    "codegen:phat": "graphql-codegen --config src/gql/phat/codegen.ts",
+    "codegen:offchain": "graphql-codegen --config src/gql/offchain/codegen.ts",
+    "generate": "bun run generate:defs && bun run generate:meta",
+    "generate:defs": "bun ./node_modules/.bin/polkadot-types-from-defs --package src/phala/interfaces --endpoint src/phala/metadata.json --input ./src/phala/interfaces",
+    "generate:meta": "bun ./node_modules/.bin/polkadot-types-from-chain --package src/phala/interfaces --endpoint src/phala/metadata.json --output ./src/phala/interfaces",
+    "updateMetadata": "bun src/phala/updateMetadata.ts"
+  },
+  "dependencies": {
+    "@json2csv/plainjs": "^7.0.6",
+    "@phala/sdk": "^0.6.0-beta.19",
+    "@polkadot/api": "^10.12.6",
+    "bun": "^1.1.3",
+    "cron": "^3.1.7",
+    "date-fns": "^3.6.0",
+    "decimal.js": "^10.4.3",
+    "graphql": "^16.8.1",
+    "graphql-request": "^6.1.0",
+    "pino": "^8.20.0",
+    "pino-pretty": "^11.0.0",
+    "radash": "^12.1.0",
+    "snakecase-keys": "^8.0.0",
+    "subshape": "^0.14.0",
+    "wretch": "^2.8.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "1.7.0",
+    "@graphql-codegen/cli": "^5.0.2",
+    "@graphql-codegen/typescript-graphql-request": "^6.2.0",
+    "@polkadot/typegen": "^10.12.6",
+    "@types/bun": "latest",
+    "typescript": "^5.4.5"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

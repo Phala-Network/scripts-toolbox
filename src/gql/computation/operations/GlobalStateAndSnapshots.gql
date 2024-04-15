@@ -1,0 +1,30 @@
+query GlobalStateAndSnapshots {
+  globalStateById(id: "0") {
+    averageApr
+    averageBlockTime
+    budgetPerBlock
+    budgetPerShare
+    cumulativeRewards
+    delegatorCount
+    height
+    idleWorkerCount
+    idleWorkerShares
+    totalValue
+    workerCount
+  }
+  globalStateSnapshotsConnection(orderBy: updatedTime_DESC, first: 999) {
+    edges {
+      node {
+        updatedTime
+        idleWorkerCount
+        totalValue
+        workerCount
+        delegatorCount
+        height
+        cumulativeRewards
+        averageApr
+        budgetPerShare
+      }
+    }
+  }
+}
