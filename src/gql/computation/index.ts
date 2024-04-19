@@ -3846,6 +3846,11 @@ type GlobalStateAndSnapshotsQueryVariables = Exact<{ [key: string]: never; }>;
 
 type GlobalStateAndSnapshotsQuery = { globalStateById?: { averageApr: string, averageBlockTime: number, budgetPerBlock: string, budgetPerShare: string, cumulativeRewards: string, delegatorCount: number, height: number, idleWorkerCount: number, idleWorkerShares: string, totalValue: string, workerCount: number } | null, globalStateSnapshotsConnection: { edges: Array<{ node: { updatedTime: string, idleWorkerCount: number, totalValue: string, workerCount: number, delegatorCount: number, height: number, cumulativeRewards: string, averageApr: string, budgetPerShare: string } }> } };
 
+type OnlineWorkersQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+type OnlineWorkersQuery = { workersConnection: { edges: Array<{ node: { id: string } }> } };
+
 type ReclaimableWorkersQueryVariables = Exact<{
   orderBy: Array<WorkerOrderByInput> | WorkerOrderByInput;
   where?: InputMaybe<WorkerWhereInput>;
@@ -3905,6 +3910,21 @@ type ReclaimableWorkersQuery = { workersConnection: { totalCount: number, edges:
   }
 }
     `;
+ const OnlineWorkersDocument = gql`
+    query OnlineWorkers {
+  workersConnection(
+    orderBy: id_ASC
+    where: {session: {state_eq: WorkerIdle}}
+    first: 9999999
+  ) {
+    edges {
+      node {
+        id
+      }
+    }
+  }
+}
+    `;
  const ReclaimableWorkersDocument = gql`
     query ReclaimableWorkers($orderBy: [WorkerOrderByInput!]!, $where: WorkerWhereInput, $first: Int) {
   workersConnection(orderBy: $orderBy, where: $where, first: $first) {
@@ -3933,6 +3953,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     GlobalStateAndSnapshots(variables?: GlobalStateAndSnapshotsQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<GlobalStateAndSnapshotsQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<GlobalStateAndSnapshotsQuery>(GlobalStateAndSnapshotsDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'GlobalStateAndSnapshots', 'query', variables);
+    },
+    OnlineWorkers(variables?: OnlineWorkersQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<OnlineWorkersQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<OnlineWorkersQuery>(OnlineWorkersDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'OnlineWorkers', 'query', variables);
     },
     ReclaimableWorkers(variables: ReclaimableWorkersQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ReclaimableWorkersQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ReclaimableWorkersQuery>(ReclaimableWorkersDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ReclaimableWorkers', 'query', variables);

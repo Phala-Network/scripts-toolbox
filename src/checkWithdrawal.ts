@@ -2,10 +2,9 @@ import {Keyring} from '@polkadot/keyring'
 import {waitReady} from '@polkadot/wasm-crypto'
 import {CronJob} from 'cron'
 import {addDays} from 'date-fns'
-import {GraphQLClient} from 'graphql-request'
 import * as _ from 'radash'
 import {getSdk} from './gql/computation'
-import {assertNotNull, createPhalaApi, logger} from './utils'
+import {assertNotNull, computationClient, createPhalaApi, logger} from './utils'
 
 const THRESHOLD = '0.001'
 
@@ -16,11 +15,7 @@ const main = async (): Promise<void> => {
   const keyring = new Keyring({type: 'sr25519'})
   const pair = keyring.addFromMnemonic(Bun.env.MNEMONIC as string)
   const api = await createPhalaApi(chain)
-  const sdk = getSdk(
-    new GraphQLClient(
-      `https://subsquid.phala.network/${chain}-computation/graphql`,
-    ),
-  )
+  const sdk = getSdk(computationClient[chain])
 
   const reclaimableWorkers = await sdk
     .ReclaimableWorkers({

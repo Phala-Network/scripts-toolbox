@@ -1,0 +1,13 @@
+query OnlineWorkers {
+  workersConnection(
+    orderBy: id_ASC
+    where: { session: { state_eq: WorkerIdle } }
+    first: 9999999
+  ) {
+    edges {
+      node {
+        id
+      }
+    }
+  }
+}

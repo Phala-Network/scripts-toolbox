@@ -11,16 +11,20 @@ import {getSdk as getCirculationSdk} from './gql/circulation'
 import {getSdk as getComputationSdk} from './gql/computation'
 import {getSdk as getOffchainSdk} from './gql/offchain'
 import {getSdk as getPhatSdk} from './gql/phat'
-import {type Chain, assertNotNull, logger} from './utils'
+import {
+  type Chain,
+  assertNotNull,
+  circulationClient,
+  computationClient,
+  logger,
+  offchainClient,
+  phatClient,
+} from './utils'
 
 Decimal.set({toExpNeg: -9e15, toExpPos: 9e15, precision: 50})
 
 const fetchStats = async (chain: Chain) => {
-  const sdk = getComputationSdk(
-    new GraphQLClient(
-      `https://subsquid.phala.network/${chain}-computation/graphql`,
-    ),
-  )
+  const sdk = getComputationSdk(computationClient[chain])
   const data = await sdk.GlobalStateAndSnapshots()
   assert(data.globalStateById)
   const edges = data.globalStateSnapshotsConnection.edges
@@ -82,13 +86,7 @@ const fetchCirculation = async () => {
 }
 
 const fetchCirculationSnapshot = async (chain: Chain | 'ethereum') => {
-  const sdk = getCirculationSdk(
-    new GraphQLClient(
-      `https://subsquid.phala.network/${
-        chain === 'ethereum' ? 'ethereum-pha' : chain
-      }-circulation/graphql`,
-    ),
-  )
+  const sdk = getCirculationSdk(circulationClient[chain])
   const data = await sdk.Snapshots()
   return data.snapshotsConnection.edges.map(({node}) => {
     return {
@@ -99,16 +97,8 @@ const fetchCirculationSnapshot = async (chain: Chain | 'ethereum') => {
 }
 
 const fetchPhatContract = async () => {
-  const phatSdk = getPhatSdk(
-    new GraphQLClient(
-      'https://subsquid.phala.network/phat-contract-squid/graphql',
-    ),
-  )
-  const offchainSdk = getOffchainSdk(
-    new GraphQLClient(
-      'https://subsquid.phala.network/phat-offchain/v1/graphql',
-    ),
-  )
+  const phatSdk = getPhatSdk(phatClient)
+  const offchainSdk = getOffchainSdk(offchainClient)
   const phatMeta = await phatSdk.Meta()
   const offlineExecution = await offchainSdk.OfflineExecution()
   return {
