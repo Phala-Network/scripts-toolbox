@@ -1,0 +1,5 @@
+query TokenomicUpdatedTime {
+  globalStateById(id: "0") {
+    tokenomicUpdatedTime
+  }
+}

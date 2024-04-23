@@ -31,8 +31,8 @@ function getRandomCoordinate({
   }
 }
 
-const DEPINSCAN_UID = assertNotNull(Bun.env.DEPINSCAN_UID)
-const DEPINSCAN_API_KEY = assertNotNull(Bun.env.DEPINSCAN_API_KEY)
+const DEPINSCAN_UID = assertNotNull(process.env.DEPINSCAN_UID)
+const DEPINSCAN_API_KEY = assertNotNull(process.env.DEPINSCAN_API_KEY)
 const depinscan = wretch('https://api.depinscan.io/api').headers({
   authorization: DEPINSCAN_API_KEY,
 })

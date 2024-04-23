@@ -1701,6 +1701,7 @@ type GlobalState = {
   phaRate: Scalars['BigDecimal']['output'];
   re: Scalars['BigDecimal']['output'];
   snapshotUpdatedTime: Scalars['DateTime']['output'];
+  tokenomicUpdatedTime: Scalars['DateTime']['output'];
   totalValue: Scalars['BigDecimal']['output'];
   treasuryRatio: Scalars['BigDecimal']['output'];
   vMax: Scalars['BigDecimal']['output'];
@@ -1782,6 +1783,10 @@ const GlobalStateOrderByInput = {
   SnapshotUpdatedTimeAscNullsFirst: 'snapshotUpdatedTime_ASC_NULLS_FIRST',
   SnapshotUpdatedTimeDesc: 'snapshotUpdatedTime_DESC',
   SnapshotUpdatedTimeDescNullsLast: 'snapshotUpdatedTime_DESC_NULLS_LAST',
+  TokenomicUpdatedTimeAsc: 'tokenomicUpdatedTime_ASC',
+  TokenomicUpdatedTimeAscNullsFirst: 'tokenomicUpdatedTime_ASC_NULLS_FIRST',
+  TokenomicUpdatedTimeDesc: 'tokenomicUpdatedTime_DESC',
+  TokenomicUpdatedTimeDescNullsLast: 'tokenomicUpdatedTime_DESC_NULLS_LAST',
   TotalValueAsc: 'totalValue_ASC',
   TotalValueAscNullsFirst: 'totalValue_ASC_NULLS_FIRST',
   TotalValueDesc: 'totalValue_DESC',
@@ -2183,6 +2188,15 @@ type GlobalStateWhereInput = {
   snapshotUpdatedTime_lte?: InputMaybe<Scalars['DateTime']['input']>;
   snapshotUpdatedTime_not_eq?: InputMaybe<Scalars['DateTime']['input']>;
   snapshotUpdatedTime_not_in?: InputMaybe<Array<Scalars['DateTime']['input']>>;
+  tokenomicUpdatedTime_eq?: InputMaybe<Scalars['DateTime']['input']>;
+  tokenomicUpdatedTime_gt?: InputMaybe<Scalars['DateTime']['input']>;
+  tokenomicUpdatedTime_gte?: InputMaybe<Scalars['DateTime']['input']>;
+  tokenomicUpdatedTime_in?: InputMaybe<Array<Scalars['DateTime']['input']>>;
+  tokenomicUpdatedTime_isNull?: InputMaybe<Scalars['Boolean']['input']>;
+  tokenomicUpdatedTime_lt?: InputMaybe<Scalars['DateTime']['input']>;
+  tokenomicUpdatedTime_lte?: InputMaybe<Scalars['DateTime']['input']>;
+  tokenomicUpdatedTime_not_eq?: InputMaybe<Scalars['DateTime']['input']>;
+  tokenomicUpdatedTime_not_in?: InputMaybe<Array<Scalars['DateTime']['input']>>;
   totalValue_eq?: InputMaybe<Scalars['BigDecimal']['input']>;
   totalValue_gt?: InputMaybe<Scalars['BigDecimal']['input']>;
   totalValue_gte?: InputMaybe<Scalars['BigDecimal']['input']>;
@@ -3860,6 +3874,11 @@ type ReclaimableWorkersQueryVariables = Exact<{
 
 type ReclaimableWorkersQuery = { workersConnection: { totalCount: number, edges: Array<{ node: { id: string, stakePool?: { id: string } | null } }> } };
 
+type TokenomicUpdatedTimeQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+type TokenomicUpdatedTimeQuery = { globalStateById?: { tokenomicUpdatedTime: string } | null };
+
 
  const BasePoolsDocument = gql`
     query BasePools($orderBy: [BasePoolOrderByInput!]!, $first: Int, $where: BasePoolWhereInput) {
@@ -3940,6 +3959,13 @@ type ReclaimableWorkersQuery = { workersConnection: { totalCount: number, edges:
   }
 }
     `;
+ const TokenomicUpdatedTimeDocument = gql`
+    query TokenomicUpdatedTime {
+  globalStateById(id: "0") {
+    tokenomicUpdatedTime
+  }
+}
+    `;
 
 export type SdkFunctionWrapper = <T>(action: (requestHeaders?:Record<string, string>) => Promise<T>, operationName: string, operationType?: string, variables?: any) => Promise<T>;
 
@@ -3959,6 +3985,9 @@ export function getSdk(client: GraphQLClient, withWrapper: SdkFunctionWrapper = 
     },
     ReclaimableWorkers(variables: ReclaimableWorkersQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<ReclaimableWorkersQuery> {
       return withWrapper((wrappedRequestHeaders) => client.request<ReclaimableWorkersQuery>(ReclaimableWorkersDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'ReclaimableWorkers', 'query', variables);
+    },
+    TokenomicUpdatedTime(variables?: TokenomicUpdatedTimeQueryVariables, requestHeaders?: GraphQLClientRequestHeaders): Promise<TokenomicUpdatedTimeQuery> {
+      return withWrapper((wrappedRequestHeaders) => client.request<TokenomicUpdatedTimeQuery>(TokenomicUpdatedTimeDocument, variables, {...requestHeaders, ...wrappedRequestHeaders}), 'TokenomicUpdatedTime', 'query', variables);
     }
   };
 }

@@ -1,4 +1,4 @@
-const address = Bun.env.ADDRESS ?? 'https://phala-rpc.dwellir.com'
+const address = process.env.ADDRESS ?? 'https://phala-rpc.dwellir.com'
 
 void fetch(address, {
   method: 'POST',

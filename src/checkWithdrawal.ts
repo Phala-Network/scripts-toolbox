@@ -9,11 +9,11 @@ import {assertNotNull, computationClient, createPhalaApi, logger} from './utils'
 const THRESHOLD = '0.001'
 
 const main = async (): Promise<void> => {
-  const chain = assertNotNull(Bun.env.CHAIN) as 'phala' | 'khala'
+  const chain = assertNotNull(process.env.CHAIN) as 'phala' | 'khala'
   logger.info(chain)
   await waitReady()
   const keyring = new Keyring({type: 'sr25519'})
-  const pair = keyring.addFromMnemonic(Bun.env.MNEMONIC as string)
+  const pair = keyring.addFromMnemonic(process.env.MNEMONIC as string)
   const api = await createPhalaApi(chain)
   const sdk = getSdk(computationClient[chain])
 

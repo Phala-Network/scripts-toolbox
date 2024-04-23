@@ -37,6 +37,7 @@
     "snakecase",
     "subshape",
     "sygma",
+    "Tokenomic",
     "typegen"
   ],
   "editor.codeActionsOnSave": {

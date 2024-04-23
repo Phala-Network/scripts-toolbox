@@ -112,7 +112,7 @@ const fetchPhatContract = async () => {
 const update = async () => {
   const duneUpload = wretch('https://api.dune.com/api')
     .headers({
-      'X-DUNE-API-KEY': assertNotNull(Bun.env.DUNE_API_KEY),
+      'X-DUNE-API-KEY': assertNotNull(process.env.DUNE_API_KEY),
     })
     .url('/v1/table/upload/csv')
 
