@@ -1,34 +1,26 @@
 import {Parser} from '@json2csv/plainjs'
 import {Reader} from '@maxmind/geoip2-node'
+import * as _ from 'radash'
 import wretch from 'wretch'
 import {getSdk} from './gql/computation'
 import {type Chain, assertNotNull, computationClient, logger} from './utils'
 
-function getRandomCoordinate({
-  latitude,
-  longitude,
-}: {
-  latitude: number
-  longitude: number
-}) {
-  const accuracyRadius = 50000
-  const earthRadius = 6371000
+function getDistance(point1: Point, point2: Point) {
+  const R = 6371 // Radius of the Earth in km
 
-  const randomAngle = Math.random() * 2 * Math.PI
-  const randomRadius = Math.random() * accuracyRadius
+  const radLat1 = (point1.latitude * Math.PI) / 180
+  const radLat2 = (point2.latitude * Math.PI) / 180
+  const deltaLat = radLat2 - radLat1
+  const deltaLon = ((point2.longitude - point1.longitude) * Math.PI) / 180
 
-  const newLatitude =
-    latitude +
-    (randomRadius / earthRadius) * (180 / Math.PI) * Math.sin(randomAngle)
-  const newLongitude =
-    longitude +
-    ((randomRadius / earthRadius) * (180 / Math.PI) * Math.cos(randomAngle)) /
-      Math.cos((latitude * Math.PI) / 180)
+  // Haversine
+  const a =
+    Math.sin(deltaLat / 2) ** 2 +
+    Math.cos(radLat1) * Math.cos(radLat2) * Math.sin(deltaLon / 2) ** 2
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  const distance = R * c
 
-  return {
-    latitude: Number.parseFloat(newLatitude.toFixed(4)),
-    longitude: Number.parseFloat(newLongitude.toFixed(4)),
-  }
+  return distance
 }
 
 const DEPINSCAN_UID = assertNotNull(process.env.DEPINSCAN_UID)
@@ -37,15 +29,26 @@ const depinscan = wretch('https://api.depinscan.io/api').headers({
   authorization: DEPINSCAN_API_KEY,
 })
 
-interface Worker {
+interface Point {
+  latitude: number
+  longitude: number
+}
+
+interface Worker extends Point {
   id: string
   pubkey: string
   chain: Chain
   ip: string
+  country?: string
   city?: string
   accuracyRadius?: number
-  latitude?: number
-  longitude?: number
+}
+
+interface GrafanaData extends Point {
+  phala: number
+  khala: number
+  country?: string
+  city?: string
 }
 
 const fetchOnlineWorkers = async (chain: Chain): Promise<Set<string>> => {
@@ -54,9 +57,9 @@ const fetchOnlineWorkers = async (chain: Chain): Promise<Set<string>> => {
   return new Set(data.workersConnection.edges.map((edge) => edge.node.id))
 }
 
-const process = async () => {
+const main = async () => {
   const reader = await Reader.open('./out/GeoLite2-City.mmdb')
-  const result = new Map<string, Worker>()
+  const workerMap = new Map<string, Worker>()
 
   const processWorkers = async (chain: Chain, path: string) => {
     const onlineWorkers = await fetchOnlineWorkers(chain)
@@ -68,61 +71,84 @@ const process = async () => {
       if (!pubkey || !ip || !onlineWorkers.has(pubkey)) {
         continue
       }
-      const {city, location} = reader.city(ip)
+      const {city, location, country} = reader.city(ip)
+      if (location == null) {
+        continue
+      }
       const worker: Worker = {
         id: `${chain}-${pubkey}`,
         pubkey,
         chain,
         ip,
+        country: country?.names.en,
         city: city?.names.en,
-        accuracyRadius: location?.accuracyRadius,
-        ...getRandomCoordinate({
-          latitude: assertNotNull(location?.latitude),
-          longitude: assertNotNull(location?.longitude),
-        }),
+        accuracyRadius: location.accuracyRadius,
+        latitude: location.latitude,
+        longitude: location.longitude,
       }
-      result.set(worker.id, worker)
+      workerMap.set(worker.id, worker)
     }
   }
 
   await processWorkers('phala', './out/phala.ips')
   await processWorkers('khala', './out/khala.ips')
 
-  const arr = Array.from(result.values())
+  const workers = Array.from(workerMap.values())
 
-  const depinscanEvents = arr.map((worker) => ({
-    custom: {
-      latitude: worker.latitude,
-      longitude: worker.longitude,
-    },
-    publisher: worker.id,
-  }))
+  logger.info(`Total workers: ${workers.length}`)
 
-  const grafanaData = arr.map((worker) => ({
-    chain: worker.chain,
-    latitude: worker.latitude,
-    longitude: worker.longitude,
-  }))
+  // const depinscanEvents = workers.map((worker) => ({
+  //   custom: {
+  //     latitude: worker.latitude,
+  //     longitude: worker.longitude,
+  //   },
+  //   publisher: worker.id,
+  // }))
 
-  logger.info(
-    await depinscan
-      .url('/upload-device-metrics')
-      .post({uid: DEPINSCAN_UID, events: depinscanEvents})
-      .text(),
-  )
+  // logger.info(
+  //   await depinscan
+  //     .url('/upload-device-metrics')
+  //     .post({uid: DEPINSCAN_UID, events: depinscanEvents})
+  //     .text(),
+  // )
+
+  const grafanaData: GrafanaData[] = []
+
+  for (const worker of workers) {
+    let found = false
+    for (const data of grafanaData) {
+      const distance = getDistance(worker, data)
+      if (distance < 100) {
+        data[worker.chain] += 1
+        found = true
+        break
+      }
+    }
+
+    if (!found) {
+      grafanaData.push({
+        latitude: worker.latitude,
+        longitude: worker.longitude,
+        phala: worker.chain === 'phala' ? 1 : 0,
+        khala: worker.chain === 'khala' ? 1 : 0,
+        country: worker.country,
+        city: worker.city,
+      })
+    }
+  }
 
   await Bun.write(
     './out/grafana_worker_geo.csv',
     new Parser().parse(grafanaData),
   )
-  await Bun.write(
-    './out/depinscan_worker_geo.json',
-    JSON.stringify(depinscanEvents, null, 2),
-  )
-  await Bun.write(
-    './out/depinscan_worker_geo.csv',
-    new Parser().parse(depinscanEvents),
-  )
+  // await Bun.write(
+  //   './out/depinscan_worker_geo.json',
+  //   JSON.stringify(depinscanEvents, null, 2),
+  // )
+  // await Bun.write(
+  //   './out/depinscan_worker_geo.csv',
+  //   new Parser().parse(depinscanEvents),
+  // )
 }
 
 const deleteDepinscanDevices = async () => {
@@ -144,5 +170,5 @@ const deleteDepinscanDevices = async () => {
   }
 }
 
-await process()
+await main()
 // await deleteDepinscanDevices()
