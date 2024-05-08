@@ -1148,7 +1148,7 @@ type MetaQuery = { metaById?: { contract: number, idleWorker: number, stake: str
 
  const ContractsDocument = gql`
     query Contracts {
-  contractsConnection(orderBy: instantiatedTime_DESC, first: 999999999) {
+  contractsConnection(orderBy: instantiatedTime_DESC, first: 100) {
     edges {
       node {
         id
