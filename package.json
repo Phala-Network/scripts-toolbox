@@ -16,14 +16,14 @@
   "dependencies": {
     "@json2csv/plainjs": "^7.0.6",
     "@maxmind/geoip2-node": "^5.0.0",
-    "@phala/sdk": "^0.6.0-beta.19",
-    "@polkadot/api": "^11.0.1",
+    "@phala/sdk": "beta",
+    "@polkadot/api": "^11.0.3",
     "cron": "^3.1.7",
     "date-fns": "^3.6.0",
     "decimal.js": "^10.4.3",
     "graphql": "^16.8.1",
     "graphql-request": "^6.1.0",
-    "pino": "^8.20.0",
+    "pino": "^9.0.0",
     "pino-pretty": "^11.0.0",
     "radash": "^12.1.0",
     "snakecase-keys": "^8.0.0",
@@ -31,10 +31,10 @@
     "wretch": "^2.8.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.7.1",
+    "@biomejs/biome": "1.7.3",
     "@graphql-codegen/cli": "^5.0.2",
     "@graphql-codegen/typescript-graphql-request": "^6.2.0",
-    "@polkadot/typegen": "^11.0.1",
+    "@polkadot/typegen": "^11.0.3",
     "@types/bun": "latest",
     "typescript": "^5.4.5"
   },

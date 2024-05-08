@@ -1,0 +1,22 @@
+query Meta {
+  metaById(id: "0") {
+    contract
+    idleWorker
+    stake
+    staker
+    worker
+  }
+
+  metaSnapshotsConnection(orderBy: updatedTime_DESC, first: 999) {
+    edges {
+      node {
+        updatedTime
+        contract
+        idleWorker
+        stake
+        staker
+        worker
+      }
+    }
+  }
+}

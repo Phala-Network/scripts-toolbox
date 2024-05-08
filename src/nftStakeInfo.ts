@@ -1,5 +1,6 @@
 import * as $ from 'subshape'
-import {createPhalaApi, logger} from './utils'
+import {logger} from './utils/logger'
+import {createPhalaApi} from './utils/phalaApi'
 
 const chain = 'phala'
 const cid = 10008

@@ -1,0 +1,18 @@
+query Contracts {
+  contractsConnection(orderBy: instantiatedTime_DESC, first: 100) {
+    edges {
+      node {
+        id
+        deployer {
+          id
+        }
+        cluster {
+          id
+        }
+        instantiatedTime
+        stake
+        staker
+      }
+    }
+  }
+}

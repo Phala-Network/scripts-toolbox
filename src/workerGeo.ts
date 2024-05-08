@@ -3,7 +3,10 @@ import {Reader} from '@maxmind/geoip2-node'
 import * as _ from 'radash'
 import wretch from 'wretch'
 import {getSdk} from './gql/computation'
-import {type Chain, assertNotNull, computationClient, logger} from './utils'
+import {assertNotNull} from './utils/assertNotNull'
+import {computationClient} from './utils/gql'
+import {logger} from './utils/logger'
+import type {Chain} from './utils/phalaApi'
 
 function getDistance(point1: Point, point2: Point) {
   const R = 6371 // Radius of the Earth in km
@@ -73,6 +76,7 @@ const main = async () => {
       }
       const {city, location, country} = reader.city(ip)
       if (location == null) {
+        logger.error(`Location not found for ${ip}`)
         continue
       }
       const worker: Worker = {
@@ -118,7 +122,7 @@ const main = async () => {
     let found = false
     for (const data of grafanaData) {
       const distance = getDistance(worker, data)
-      if (distance < 100) {
+      if (distance < 50) {
         data[worker.chain] += 1
         found = true
         break

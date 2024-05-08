@@ -3,7 +3,9 @@ await Bun.build({
     './src/dune.ts',
     './src/checkWithdrawal.ts',
     './src/monitBalancer.ts',
+    './src/callBalancer.ts',
   ],
   outdir: './out',
-  target: 'node',
+  target: 'bun',
+  // minify: true,
 })

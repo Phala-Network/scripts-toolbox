@@ -4,7 +4,10 @@ import {CronJob} from 'cron'
 import {addDays} from 'date-fns'
 import * as _ from 'radash'
 import {getSdk} from './gql/computation'
-import {assertNotNull, computationClient, createPhalaApi, logger} from './utils'
+import {assertNotNull} from './utils/assertNotNull'
+import {computationClient} from './utils/gql'
+import {logger} from './utils/logger'
+import {createPhalaApi} from './utils/phalaApi'
 
 const THRESHOLD = '0.001'
 

@@ -1,9 +1,0 @@
-query Meta {
-  metaById(id: "0") {
-    contract
-    idleWorker
-    stake
-    staker
-    worker
-  }
-}

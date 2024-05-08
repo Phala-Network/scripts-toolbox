@@ -1,9 +1,8 @@
 import assert from 'node:assert'
 import {Parser} from '@json2csv/plainjs'
 import {CronJob} from 'cron'
-import {isBefore} from 'date-fns'
+import {isBefore, isSameDay} from 'date-fns'
 import Decimal from 'decimal.js'
-import {GraphQLClient} from 'graphql-request'
 import * as _ from 'radash'
 import snakecaseKeys from 'snakecase-keys'
 import wretch from 'wretch'
@@ -11,15 +10,15 @@ import {getSdk as getCirculationSdk} from './gql/circulation'
 import {getSdk as getComputationSdk} from './gql/computation'
 import {getSdk as getOffchainSdk} from './gql/offchain'
 import {getSdk as getPhatSdk} from './gql/phat'
+import {assertNotNull} from './utils/assertNotNull'
 import {
-  type Chain,
-  assertNotNull,
   circulationClient,
   computationClient,
-  logger,
   offchainClient,
   phatClient,
-} from './utils'
+} from './utils/gql'
+// import {logger} from './utils/logger'
+import type {Chain} from './utils/phalaApi'
 
 Decimal.set({toExpNeg: -9e15, toExpPos: 9e15, precision: 50})
 
@@ -99,14 +98,33 @@ const fetchCirculationSnapshot = async (chain: Chain | 'ethereum') => {
 const fetchPhatContract = async () => {
   const phatSdk = getPhatSdk(phatClient)
   const offchainSdk = getOffchainSdk(offchainClient)
-  const phatMeta = await phatSdk.Meta()
-  const offlineExecution = await offchainSdk.OfflineExecution()
-  return {
-    realtime: snakecaseKeys(assertNotNull(phatMeta.metaById)),
-    snapshots: offlineExecution.phatOfflineExecution.map((data) =>
-      snakecaseKeys(data),
-    ),
-  }
+  const contracts = await phatSdk.Contracts().then((r) =>
+    r.contractsConnection.edges.map(({node}) => {
+      return {
+        id: node.id,
+        deployer: node.deployer.id,
+        // cluster: node.cluster.id,
+        instantiated_time: node.instantiatedTime,
+        stake: node.stake,
+        staker: node.staker,
+      }
+    }),
+  )
+  const phat = await phatSdk.Meta()
+  const realtime = snakecaseKeys(assertNotNull(phat.metaById))
+  const phatSnapshots = phat.metaSnapshotsConnection.edges.map(({node}) => {
+    return snakecaseKeys(node)
+  })
+  const offlineExecution = await offchainSdk
+    .OfflineExecution()
+    .then((r) => r.phatOfflineExecution.map((data) => snakecaseKeys(data)))
+  const snapshots = phatSnapshots.map((data) => {
+    const offchainData = offlineExecution.find((x) =>
+      isSameDay(x.dt, data.updated_time),
+    )
+    return {...data, ...offchainData}
+  })
+  return {realtime, snapshots, contracts}
 }
 
 const update = async () => {
@@ -116,7 +134,7 @@ const update = async () => {
     })
     .url('/v1/table/upload/csv')
 
-  logger.trace('Fetching computation data')
+  // logger.info('Fetching computation data')
   const circulation = await fetchCirculation()
   const phalaStats = await fetchStats('phala')
   const khalaStats = await fetchStats('khala')
@@ -126,7 +144,7 @@ const update = async () => {
     {chain: 'Ethereum', ...circulation.ethereum},
   ]
 
-  logger.trace('Uploading computation data')
+  // logger.info('Uploading computation data')
   await duneUpload
     .json({
       data: new Parser().parse(computationData),
@@ -135,7 +153,7 @@ const update = async () => {
     })
     .post()
 
-  logger.trace('Fetching circulation data')
+  // logger.info('Fetching circulation data')
   const phalaCirculationSnapshots = await fetchCirculationSnapshot('phala')
   const khalaCirculationSnapshots = await fetchCirculationSnapshot('khala')
   const ethereumCirculationSnapshots =
@@ -178,7 +196,7 @@ const update = async () => {
     },
   )
 
-  logger.trace('Uploading computation snapshots data')
+  // logger.info('Uploading computation snapshots data')
   await duneUpload
     .json({
       data: new Parser().parse(snapshotsData),
@@ -187,23 +205,33 @@ const update = async () => {
     })
     .post()
 
-  logger.trace('Fetching phat contract data')
+  // logger.info('Fetching phat contract data')
   const phatData = await fetchPhatContract()
 
-  logger.trace('Uploading phat contract data')
+  // logger.info('Uploading phat contract data')
   await duneUpload
     .json({
       data: new Parser().parse(phatData.realtime),
-      table_name: 'phala_phat_contract',
+      table_name: 'phala_ai_agent_contract',
       is_private: false,
     })
     .post()
 
-  logger.trace('Uploading phat contract snapshots data')
+  // await Bun.write('./out/contracts.csv', new Parser().parse(phatData.contracts))
+
+  await duneUpload
+    .json({
+      data: new Parser().parse(phatData.contracts),
+      table_name: 'phala_ai_agent_contract_contracts',
+      is_private: false,
+    })
+    .post()
+
+  // logger.info('Uploading phat contract snapshots data')
   await duneUpload
     .json({
       data: new Parser().parse(phatData.snapshots),
-      table_name: 'phala_phat_contract_snapshots',
+      table_name: 'phala_ai_agent_contract_snapshots',
       is_private: false,
     })
     .post()

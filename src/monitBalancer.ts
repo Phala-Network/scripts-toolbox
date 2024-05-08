@@ -1,7 +1,7 @@
 import {differenceInMinutes} from 'date-fns'
 import type {GraphQLClient} from 'graphql-request'
 import {getSdk} from './gql/computation'
-import {computationClient} from './utils'
+import {computationClient} from './utils/gql'
 
 const checkTokenomicUpdatedTime = async (client: GraphQLClient) => {
   const sdk = getSdk(client)
