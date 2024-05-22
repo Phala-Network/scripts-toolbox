@@ -10,7 +10,10 @@ export const computationClient: Record<Chain, GraphQLClient> = {
   ),
 }
 
-export const circulationClient: Record<Chain | 'ethereum', GraphQLClient> = {
+export const circulationClient: Record<
+  Chain | 'ethereum' | 'base',
+  GraphQLClient
+> = {
   phala: new GraphQLClient(
     'https://subsquid.phala.network/phala-circulation/graphql',
   ),
@@ -19,6 +22,9 @@ export const circulationClient: Record<Chain | 'ethereum', GraphQLClient> = {
   ),
   ethereum: new GraphQLClient(
     'https://subsquid.phala.network/ethereum-pha-circulation/graphql',
+  ),
+  base: new GraphQLClient(
+    'https://subsquid.phala.network/base-pha-circulation/graphql',
   ),
 }
 

@@ -49,22 +49,28 @@ const fetchStats = async (chain: Chain) => {
 }
 
 const fetchCirculation = async () => {
-  interface PhalaCirculation {
+  interface Circulation {
     circulation: string
+    timestamp: string
+  }
+
+  interface PhalaCirculation extends Circulation {
     crowdloan: string
     reward: string
     sygmaBridge: string
-    timestamp: string
     totalIssuance: string
   }
 
-  interface EthereumCirculation {
-    circulation: string
+  interface EthereumCirculation extends Circulation {
     phalaChainBridge?: string
     khalaChainBridge?: string
     reward: string
     sygmaBridge: string
-    timestamp: string
+    portalBridge: string
+    totalSupply: string
+  }
+
+  interface BaseCirculation extends Circulation {
     totalSupply: string
   }
 
@@ -72,6 +78,7 @@ const fetchCirculation = async () => {
     phala: PhalaCirculation
     khala: PhalaCirculation
     ethereum: EthereumCirculation
+    base: BaseCirculation
     totalCirculation: string
   } = await fetch('https://pha-circulation-server.vercel.app/api/all').then(
     (r) => r.json(),
@@ -84,7 +91,7 @@ const fetchCirculation = async () => {
   return snakecaseKeys(json)
 }
 
-const fetchCirculationSnapshot = async (chain: Chain | 'ethereum') => {
+const fetchCirculationSnapshot = async (chain: Chain | 'ethereum' | 'base') => {
   const sdk = getCirculationSdk(circulationClient[chain])
   const data = await sdk.Snapshots()
   return data.snapshotsConnection.edges.map(({node}) => {
@@ -107,6 +114,7 @@ const fetchPhatContract = async () => {
         instantiated_time: node.instantiatedTime,
         stake: node.stake,
         staker: node.staker,
+        code_hash: node.codeHash?.id,
       }
     }),
   )
@@ -142,6 +150,7 @@ const update = async () => {
     {...circulation.phala, ...phalaStats.realtime},
     {...circulation.khala, ...khalaStats.realtime},
     {chain: 'Ethereum', ...circulation.ethereum},
+    {chain: 'Base', ...circulation.base},
   ]
 
   // logger.info('Uploading computation data')
@@ -158,6 +167,7 @@ const update = async () => {
   const khalaCirculationSnapshots = await fetchCirculationSnapshot('khala')
   const ethereumCirculationSnapshots =
     await fetchCirculationSnapshot('ethereum')
+  const baseCirculationSnapshots = await fetchCirculationSnapshot('base')
   // MEMO: ethereum has more snapshots than phala and khala
   const snapshotsData = ethereumCirculationSnapshots.map(
     (ethereumCirculation, i) => {
@@ -165,12 +175,14 @@ const update = async () => {
       const khalaData = khalaStats.snapshots[i]
       const phalaCirculation = phalaCirculationSnapshots[i]
       const khalaCirculation = khalaCirculationSnapshots[i]
+      const baseCirculation = baseCirculationSnapshots[i]
       // Force check updated_time consistency
       for (const data of [
         phalaData,
         khalaData,
         phalaCirculation,
         khalaCirculation,
+        baseCirculation,
       ]) {
         if (data != null) {
           assert(data.updated_time === ethereumCirculation.updated_time)
@@ -190,6 +202,7 @@ const update = async () => {
         ...ethereumCirculation,
         ...phalaCirculation,
         ...khalaCirculation,
+        ...baseCirculation,
         ...phalaData,
         ...khalaData,
       }
@@ -237,8 +250,8 @@ const update = async () => {
     .post()
 }
 
-await update()
+// await update()
 
-const job = new CronJob('0 * * * *', update)
+const job = new CronJob('5 * * * *', update)
 
 job.start()

@@ -12,6 +12,9 @@ query Contracts {
         instantiatedTime
         stake
         staker
+        codeHash {
+          id
+        }
       }
     }
   }
