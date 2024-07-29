@@ -60,7 +60,13 @@ const fetchOnlineWorkers = async (chain: Chain): Promise<Set<string>> => {
   return new Set(data.workersConnection.edges.map((edge) => edge.node.id))
 }
 
+const updateMmdb = async () => {
+  const mmdb = await wretch('https://git.io/GeoLite2-City.mmdb').get().blob()
+  await Bun.write('./out/GeoLite2-City.mmdb', mmdb)
+}
+
 const main = async () => {
+  await updateMmdb()
   const reader = await Reader.open('./out/GeoLite2-City.mmdb')
   const workerMap = new Map<string, Worker>()
 
